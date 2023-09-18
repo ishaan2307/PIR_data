@@ -1,0 +1,36 @@
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.std_logic_unsigned.all;
+
+entity motion_detection_interface is
+    port (
+        clk : in std_logic;
+        rst : in std_logic;
+        motion_detected : in std_logic;  -- Signal indicating motion detection
+        hps_request : out std_logic;     -- Signal to request data from FPGA to HPS
+        motion_data : out std_logic_vector(7 downto 0) -- Motion detection data
+    );
+end motion_detection_interface;
+
+architecture Behavioral of motion_detection_interface is
+    signal motion_count : integer := 0;  -- Counter to keep track of motion events
+    signal motion_detected_reg : std_logic := '0';  -- Register to store motion detected status
+
+begin
+    process (clk, rst)
+    begin
+        if rst = '1' then
+            motion_count <= 0;
+            motion_detected_reg <= '0';
+        elsif rising_edge(clk) then
+            if motion_detected = '1' then
+                motion_count <= motion_count + 1;
+                motion_detected_reg <= '1';
+            end if;
+        end if;
+    end process;
+
+    hps_request <= motion_detected_reg;  -- Provide motion detection status to HPS
+    motion_data <= std_logic_vector(to_unsigned(motion_count, 8)); -- Convert motion count to 8-bit data
+
+end Behavioral;
