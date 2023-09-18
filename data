@@ -1,0 +1,27 @@
+library ieee;
+use ieee.std_logic_1164.all;
+
+entity pir_sensor is
+    Port (
+        i_clk : in std_logic;
+        i_rst : in std_logic;
+        i_pir : in std_logic;  -- connected to the PIR sensor
+        o_motion_detected : out std_logic
+    );
+end pir_sensor;
+
+architecture Behavioral of pir_sensor is
+begin
+    process(i_clk)
+    begin
+        if rising_edge(i_clk) then
+            if i_rst = '1' then
+                o_motion_detected <= '0';
+            elsif i_pir = '1' then
+                o_motion_detected <= '1';
+            else
+                o_motion_detected <= '0';
+            end if;
+        end if;
+    end process;
+end Behavioral;
