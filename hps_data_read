@@ -1,0 +1,48 @@
+#include <stdio.h>
+#include <fcntl.h>
+#include <sys/mman.h>
+#include <unistd.h>
+
+#define FPGA_BASE 0xFF200000 // Base address of the custom FPGA interface
+#define FPGA_SPAN 0x00200000 // Address span to access
+
+int main() {
+    int fd;
+    void *virtual_base;
+    volatile unsigned int *fpga_ptr;
+
+    // Open /dev/mem to access physical memory
+    fd = open("/dev/mem", (O_RDWR | O_SYNC));
+    if (fd == -1) {
+        perror("Error opening /dev/mem");
+        return -1;
+    }
+
+    // Map the FPGA address space into user space
+    virtual_base = mmap(NULL, FPGA_SPAN, (PROT_READ | PROT_WRITE), MAP_SHARED, fd, FPGA_BASE);
+    if (virtual_base == MAP_FAILED) {
+        perror("Error mapping /dev/mem");
+        return -1;
+    }
+
+    // Access the FPGA interface
+    fpga_ptr = (volatile unsigned int *)(virtual_base);
+
+    // Main loop to read motion detection data
+    while (1) {
+        unsigned int motion_data = fpga_ptr[0]; // Read motion detection data
+
+        if (motion_data) {
+            printf("Motion Detected! Count: %u\n", motion_data);
+        }
+
+        usleep(1000000); // Sleep for 1 second (adjust as needed)
+    }
+
+    // Clean up and unmap memory
+    close(fd);
+    munmap(virtual_base, FPGA_SPAN);
+
+    return 0;
+}
+
